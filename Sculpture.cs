@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -21,13 +22,13 @@ namespace BalancedSculptures
         public static void SetupSize( byte size )
         {
             MaxBlocks = size;
-            minimum = (byte)(center - ( size / 2 + 1 ));
-            maximum = (byte)(center + size / 2 + 1);
+            minimum = (byte)(center - ( size / 2 ));
+            maximum = (byte)(center + size / 2);
         }
 
         public Sculpture( Sculpture sculpture, (byte x, byte y) position )
         {
-            for ( var x = minimum; x < maximum; x++ )
+            for ( var x = minimum; x <= maximum; x++ )
             {
                 for ( var y = 0; y < MaxBlocks; y++ )
                 {
@@ -40,19 +41,24 @@ namespace BalancedSculptures
         public List<(byte x, byte y)> getNextValidPositions()
         {
             var result = new List<(byte x, byte y)>();
-            for ( byte x = minimum; x < maximum; x++ )
+            var max = MaxBlocks / 2 + 1;
+            var limitedX = minimum;
+            var limitedY = maximum;
+            for ( byte y = 0; y < MaxBlocks; y++ )
             {
-                for ( byte y = 0; y < MaxBlocks; y++ )
+                for ( byte x = minimum; x <= maximum; x++ )
                 {
                     if ( Map[ x, y ] )
                     {
                         if ( x > minimum && !Map[ x - 1, y ] )
                         {
-                            result.Add( ((byte)(x - 1), y) );
+                            if (Math.Abs(x - 1 - center) + ((y / 2) + 1) <= max)
+                                result.Add( ((byte)(x - 1), y) );
                         }
                         if ( x < maximum && !Map[ x + 1, y ] )
                         {
-                            result.Add( ((byte)(x + 1), y) );
+                            if (Math.Abs(x + 1 - center) + ((y / 2) + 1) <= max)
+                                result.Add( ((byte)(x + 1), y) );
                         }
                         if ( y < MaxBlocks - 1 && !Map[ x, y + 1 ] )
                         {
@@ -68,10 +74,57 @@ namespace BalancedSculptures
             return result;
         }
 
-        public bool IsBalanced()
+        private (int min, int max) getCorners()
+        {
+            byte min = maximum;
+            byte max = minimum;
+            for ( byte y = 0; y < MaxBlocks; y++ )
+            {
+                for ( byte x = minimum; x <= maximum; x++ )
+                {
+                    if (Map[x,y])
+                    {
+                        if (x < min)
+                            min = x;
+                        if (x > max)
+                            max = x;
+                    }
+                }
+            }
+            return (min - center, max - center);
+        }
+
+        public bool CanBeBalanced(int currentSize)
+        {
+            var balance = GetBalance();
+            var corners = getCorners();
+            if (balance < 0)
+            {
+                for (int i = 1; i <= (MaxBlocks - currentSize); i++)
+                {
+                    balance += (i + corners.max); 
+                    if (balance >= 0)
+                        return true;
+                }
+                return false;
+            }
+            else if (balance > 0)
+            {
+                for (int i = 1; i <= (MaxBlocks - currentSize); i++)
+                {
+                    balance -= (i - corners.min); 
+                    if (balance <= 0)
+                        return true;
+                }
+                return false;
+            }
+            return true;
+        }
+
+        public int GetBalance()
         {
             var count = 0;
-            for ( byte x = minimum; x < maximum; x++ )
+            for ( byte x = minimum; x <= maximum; x++ )
             {
                 for ( byte y = 0; y < MaxBlocks; y++ )
                 {
@@ -81,7 +134,12 @@ namespace BalancedSculptures
                     }
                 }
             }
-            return count == 0;
+            return count;
+        }
+
+        public bool IsBalanced()
+        {
+            return GetBalance() == 0;
         }
 
         public override string ToString()
@@ -121,7 +179,7 @@ namespace BalancedSculptures
             var j = 0;
             for ( byte y = 0; y < MaxBlocks; y++ )
             {
-                for ( byte x = minimum; x < maximum; x++ )
+                for ( byte x = minimum; x <= maximum; x++ )
                 {
                     if ( Map[ x, y ] )
                     {

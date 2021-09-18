@@ -11,13 +11,7 @@ namespace BalancedSculptures
         {
             var startTime = DateTime.Now;
             Sculpture.SetupSize(12);
-            var base0 = new Sculpture();
-            var base1 = new Sculpture(base0, (7,0));
-            var base2 = new Sculpture(base0, (8,1));
-            var a = Task.Run(() => {getSculptures(base1, 2);});
-            var b = Task.Run(() => {getSculptures(base2, 2);});
-            a.Wait();
-            b.Wait();
+            getSculptures(new Sculpture(), 1);
             var endTime = DateTime.Now;
             Console.WriteLine("Total Sculptures: " + collection.Count.ToString() + " in " + (endTime - startTime));
             Console.ReadLine();
@@ -29,13 +23,17 @@ namespace BalancedSculptures
             foreach (var validPosition in validPositions)
             {
                 var childSculpture = new Sculpture(sculpture, validPosition);
-                if (collection.Add(childSculpture, currentSize))
+                //check if potencially the sculpture can be balanced with the pending blocks
+                if (childSculpture.CanBeBalanced(currentSize + 1))
                 {
-                    //if the size is the l
-                    if (currentSize + 1 < Sculpture.MaxBlocks)
+                    if (collection.Add(childSculpture, currentSize))
                     {
-                        getSculptures(childSculpture, (byte)(currentSize + 1));
-                    }
+                        //if there are more pending blocks to put, recursion
+                        if (currentSize + 1 < Sculpture.MaxBlocks)
+                        {
+                            getSculptures(childSculpture, (byte)(currentSize + 1));
+                        }
+                    }                    
                 }
             }
         }
