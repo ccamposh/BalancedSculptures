@@ -10,7 +10,7 @@ namespace BalancedSculptures
         static void Main(string[] args)
         {
             var startTime = DateTime.Now;
-            Sculpture.SetupSize(10);
+            Sculpture.SetupSize(12);
             var base0 = new Sculpture();
             var base1 = new Sculpture(base0, (7,0));
             var base2 = new Sculpture(base0, (8,1));
@@ -18,29 +18,24 @@ namespace BalancedSculptures
             var b = Task.Run(() => {getSculptures(base2, 2);});
             a.Wait();
             b.Wait();
-            //getSculptures(base2, 2);
             var endTime = DateTime.Now;
             Console.WriteLine("Total Sculptures: " + collection.Count.ToString() + " in " + (endTime - startTime));
             Console.ReadLine();
         }
 
-        private static void getSculptures(Sculpture sculpture, int currentSize)
+        private static void getSculptures(Sculpture sculpture, byte currentSize)
         {
             var validPositions = sculpture.getNextValidPositions();
             foreach (var validPosition in validPositions)
             {
                 var childSculpture = new Sculpture(sculpture, validPosition);
-                if (Sculpture.MaxBlocks == currentSize + 1)
+                if (collection.Add(childSculpture, currentSize))
                 {
-                    //the sculpture is complete, check if its balanced
-                    if (childSculpture.IsBalanced())
+                    //if the size is the l
+                    if (currentSize + 1 < Sculpture.MaxBlocks)
                     {
-                        collection.Add(childSculpture);
+                        getSculptures(childSculpture, (byte)(currentSize + 1));
                     }
-                }
-                else 
-                {
-                    getSculptures(childSculpture, currentSize + 1);
                 }
             }
         }
