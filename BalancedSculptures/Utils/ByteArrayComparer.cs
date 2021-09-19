@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace BalancedSculptures
+namespace ccamposh.BalancedSculptures.Utils
 {
     public class ByteArrayComparer : IEqualityComparer<byte[]> {
         public bool Equals(byte[] a, byte[] b)

@@ -2,24 +2,43 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "BuildAndTest",
+            "group": "build",
+            "dependsOn": [
+              "build",
+              "test"
+            ],
+            "dependsOrder": "sequence",
+            "problemMatcher": "$msCompile"
+        },        
+        {
             "label": "build",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/BalancedSculptures.csproj",
+                "${workspaceFolder}/BalancedSculptures/BalancedSculptures.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+              "test",
+              "${workspaceFolder}/BalancedSculptures.Tests/BalancedSculptures.Tests.csproj"
+            ]
+          },        
+        {
             "label": "publish",
             "command": "dotnet",
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/BalancedSculptures.csproj",
+                "${workspaceFolder}/BalancedSculptures/BalancedSculptures.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -32,7 +51,7 @@
             "args": [
                 "watch",
                 "run",
-                "${workspaceFolder}/BalancedSculptures.csproj",
+                "${workspaceFolder}/BalancedSculptures/BalancedSculptures.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
