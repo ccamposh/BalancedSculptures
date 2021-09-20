@@ -53,29 +53,25 @@ namespace ccamposh.BalancedSculptures
                 currentSize = sculpture.CurrentSize;
             }
             var childSculptures = sculpture.GetChildSculptures();
-            foreach (var childSculpture in childSculptures)
+            lock (_lock)
             {
-                if (childSculpture.Value.IsComplete)
+                foreach (var childSculpture in childSculptures)
                 {
-                    var inserted = _balancedSculptures.TryInsert(childSculpture.Key);
-                }
-                else 
-                {
-                    if (_incompleteSculptures.TryInsert(childSculpture.Key))
+                    if (childSculpture.Value.IsComplete)
                     {
-                        bufferBlock.Post(childSculpture.Value);
-                        lock(_lock)
+                        var inserted = _balancedSculptures.TryInsert(childSculpture.Key);
+                    }
+                    else 
+                    {
+                        if (_incompleteSculptures.TryInsert(childSculpture.Key))
                         {
+                            bufferBlock.Post(childSculpture.Value);
                             _processingThreads++;
                         }
                     }
                 }
-            }
-            lock(_lock)
-            {
                 _processingThreads--;
-            }            
+            }
         }
-
     }
 }

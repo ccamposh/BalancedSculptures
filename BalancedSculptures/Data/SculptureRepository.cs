@@ -19,11 +19,7 @@ namespace ccamposh.BalancedSculptures.Data
 
         public bool TryInsert( byte[] key )
         {
-            if (!storage.ContainsKey(key))
-            {
-                return storage.TryAdd(key, null);
-            }
-            return false;
+            return storage.TryAdd(key, null);
         }
 
         public void SaveToFile( string filename )
