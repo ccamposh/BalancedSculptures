@@ -17,9 +17,8 @@ namespace ccamposh.BalancedSculptures.Data
         }
         public long Count => storage.Count;
 
-        public bool TryInsert( Sculpture sculpture )
+        public bool TryInsert( byte[] key )
         {
-            var key = sculpture.ToArray();
             if (!storage.ContainsKey(key))
             {
                 return storage.TryAdd(key, null);

@@ -12,6 +12,7 @@ namespace ccamposh.BalancedSculptures
         private ISculptureRepository _balancedSculptures;
         private ISculptureRepository _incompleteSculptures;
         private ILogger _logger;
+        public static BufferBlock<Sculpture> bufferBlock;
         public static ActionBlock<Sculpture> actionBlock;
         private static long _processingThreads = 0;
         private static object _lock = new Object();
@@ -28,18 +29,20 @@ namespace ccamposh.BalancedSculptures
         {
             var startTime = DateTime.Now;
             Sculpture.SetupSize(size);
-            actionBlock = new ActionBlock<Sculpture>(i => getSculptures(i), new ExecutionDataflowBlockOptions {MaxDegreeOfParallelism = 30});
+            bufferBlock = new BufferBlock<Sculpture>();
+            actionBlock = new ActionBlock<Sculpture>(i => getSculptures(i), new ExecutionDataflowBlockOptions {MaxDegreeOfParallelism = 30, BoundedCapacity = 1000});
+            bufferBlock.LinkTo(actionBlock);
             _processingThreads = 1;
             getSculptures(new Sculpture());
             while ( _processingThreads > 0 || actionBlock.InputCount > 0)
             {
                 Thread.Sleep(1000);
-                _logger.LogInformation($"Level {currentSize} InputCount: {actionBlock.InputCount} Incomplete {_incompleteSculptures.Count} Balanced {_balancedSculptures.Count} Threads {_processingThreads}");
+                _logger.LogInformation($"Level {currentSize} Incomplete {_incompleteSculptures.Count} Balanced {_balancedSculptures.Count} Threads {_processingThreads} InputCount: {actionBlock.InputCount} Buffered: {bufferBlock.Count}");
             }
             actionBlock.Complete();
             actionBlock.Completion.Wait();
             var endTime = DateTime.Now;
-            Console.WriteLine("Total Sculptures: " + _balancedSculptures.Count.ToString() + " in " + (DateTime.Now - startTime));
+            _logger.LogInformation($"Total Sculptures: {_balancedSculptures.Count} in {DateTime.Now - startTime}");
             return _balancedSculptures.Count;
         }
 
@@ -52,15 +55,15 @@ namespace ccamposh.BalancedSculptures
             var childSculptures = sculpture.GetChildSculptures();
             foreach (var childSculpture in childSculptures)
             {
-                if (childSculpture.IsComplete)
+                if (childSculpture.Value.IsComplete)
                 {
-                    var inserted = _balancedSculptures.TryInsert(childSculpture);
+                    var inserted = _balancedSculptures.TryInsert(childSculpture.Key);
                 }
                 else 
                 {
-                    if (_incompleteSculptures.TryInsert(childSculpture))
+                    if (_incompleteSculptures.TryInsert(childSculpture.Key))
                     {
-                        actionBlock.Post(childSculpture);
+                        bufferBlock.Post(childSculpture.Value);
                         lock(_lock)
                         {
                             _processingThreads++;

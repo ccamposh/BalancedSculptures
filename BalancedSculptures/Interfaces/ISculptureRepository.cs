@@ -4,7 +4,7 @@ namespace ccamposh.BalancedSculptures.Interfaces
 {
     public interface ISculptureRepository
     {
-        bool TryInsert(Sculpture sculpture);
+        bool TryInsert(byte[] key);
         long Count {get; }
         void SaveToFile(string filename);
     }
