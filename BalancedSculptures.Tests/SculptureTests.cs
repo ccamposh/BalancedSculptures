@@ -130,6 +130,25 @@ namespace CREngland.CompanyService.Tests
             watch.Stop();
             Console.WriteLine("Duration " + watch.ElapsedTicks);
             Assert.IsTrue(2500000 > watch.ElapsedTicks);
-        }         
+        }  
+
+        [TestMethod]
+        public void ZipKey_Logic()
+        {
+            Sculpture.SetupSize(12);
+            var sculpture = new Sculpture("0506070809100608091011");
+            var result = sculpture.ToGuid();
+            //Assert.IsTrue(ByteArrayComparer.Compare(new byte[] {0x56, 0x78, 0x9A, 0x68, 0x9A, 0xB0}, result) == 0);
+        }     
+
+        [TestMethod]
+        public void ZipKey_MaxPossibleSculpture()
+        {
+            Sculpture.SetupSize(18);
+            var sculpture = new Sculpture("000102030405060708091011121314151608");
+            var result = sculpture.ToGuid();
+            //var z = new Guid(result);
+            //Assert.IsTrue(ByteArrayComparer.Compare(new byte[] {0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0x08}, result) == 0);
+        }            
     }
 }

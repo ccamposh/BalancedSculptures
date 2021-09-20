@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Text;
@@ -9,15 +10,15 @@ namespace ccamposh.BalancedSculptures.Data
 {
     public class SculptureRepository : ISculptureRepository
     {
-        private ConcurrentDictionary<byte[], object> storage;
+        private ConcurrentDictionary<Guid, object> storage;
 
         public SculptureRepository()
         {
-            storage = new ConcurrentDictionary<byte[], object>(new ByteArrayComparer());
+            storage = new ConcurrentDictionary<Guid, object>();
         }
         public long Count => storage.Count;
 
-        public bool TryInsert( byte[] key )
+        public bool TryInsert( Guid key )
         {
             return storage.TryAdd(key, null);
         }
@@ -27,10 +28,10 @@ namespace ccamposh.BalancedSculptures.Data
             var sb = new StringBuilder();
             foreach(var item in storage.Keys)
             {
-                foreach( var b in item)
-                {
-                    sb.Append(b.ToString("00"));
-                }
+                //foreach( var b in item)
+                //{
+                //    sb.Append(b.ToString("00"));
+                //}
                 sb.Append(System.Environment.NewLine);
             }
             File.WriteAllText(filename, sb.ToString());

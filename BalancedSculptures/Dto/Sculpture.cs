@@ -72,9 +72,9 @@ namespace ccamposh.BalancedSculptures.Dto
             }
         }
 
-        public IDictionary<byte[], Sculpture> GetChildSculptures()
+        public IDictionary<Guid, Sculpture> GetChildSculptures()
         {
-            var result = new Dictionary<byte[], Sculpture>( new ByteArrayComparer() );
+            var result = new Dictionary<Guid, Sculpture>();
             var newBlocks = getNextValidPositions();
             foreach ( var block in newBlocks )
             {
@@ -83,7 +83,7 @@ namespace ccamposh.BalancedSculptures.Dto
                 || ( !childSculpture.IsComplete && childSculpture.CanBeBalanced ) )
                 {
                     //a mirror sculpture might already be added
-                    var key = childSculpture.ToArray();
+                    var key = childSculpture.ToGuid();
                     if ( !result.ContainsKey( key ) )
                     {
                         result.Add( key, childSculpture );
@@ -246,6 +246,26 @@ namespace ccamposh.BalancedSculptures.Dto
             if ( string.Compare( result1, result2 ) <= 0 )
                 return result1;
             return result2;
+        }
+
+        public Guid ToGuid()
+        {
+            var key = ToArray();
+            var zipKey = new byte[16];
+            for (var i = 0; i < key.Length; i++)
+            {
+                var index = i / 2;
+                var position = i % 2;
+                if (position == 0)
+                {
+                    zipKey[index] = (byte)(key[i] << 4);
+                }
+                else 
+                {
+                    zipKey[index] = (byte)(zipKey[index] + key[i]);
+                }
+            }
+            return new Guid(zipKey);
         }
 
         public byte[] ToArray()
