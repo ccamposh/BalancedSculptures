@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using ccamposh.BalancedSculptures.Utils;
 
-[assembly: InternalsVisibleTo("BalancedSculptures.Tests")]
+[assembly: InternalsVisibleTo( "BalancedSculptures.Tests" )]
 namespace ccamposh.BalancedSculptures.Dto
 {
     public class Sculpture
@@ -57,8 +57,8 @@ namespace ccamposh.BalancedSculptures.Dto
 
         public Sculpture( string definition )
         {
-            byte y = 0;
-            byte lastX = 0;
+            sbyte y = -1;
+            byte lastX = 20;
             for ( byte i = 0; i < definition.Length; i += 2 )
             {
                 var x = byte.Parse( definition.Substring( i, 2 ) );
@@ -70,6 +70,28 @@ namespace ccamposh.BalancedSculptures.Dto
                 CurrentSize++;
                 lastX = x;
             }
+        }
+
+        public static Sculpture FromArray( byte[] zipArray )
+        {
+            var array = DecompressArray( zipArray );
+            var result = new Sculpture();
+            result.CurrentSize = array[ 0 ];
+            byte y = 0;
+            byte lastX = 0;
+            bool first = true;
+            for ( byte i = 1; i <= array[ 0 ]; i++ )
+            {
+                byte x = array[ i ];
+                if ( x <= lastX && !first )
+                {
+                    y++;
+                }
+                first = false;
+                result.Map[ x, y ] = true;
+                lastX = x;
+            }
+            return result;
         }
 
         public IDictionary<byte[], Sculpture> GetChildSculptures()
@@ -149,7 +171,7 @@ namespace ccamposh.BalancedSculptures.Dto
                             max = x;
                     }
                 }
-                if (blockCount == CurrentSize) break;
+                if ( blockCount == CurrentSize ) break;
             }
             return (min, max);
         }
@@ -160,7 +182,7 @@ namespace ccamposh.BalancedSculptures.Dto
             {
                 var balance = GetBalance();
                 //if it already balance, nothing to calculate
-                if (balance == 0)
+                if ( balance == 0 )
                 {
                     return true;
                 }
@@ -226,7 +248,7 @@ namespace ccamposh.BalancedSculptures.Dto
             var sb2 = new StringBuilder( 2 * MaxBlocks );
             for ( int y = 0; y < MaxBlocks; y++ )
             {
-                for ( int x = minimum; x < maximum; x++ )
+                for ( int x = minimum; x <= maximum; x++ )
                 {
                     if ( Map[ x, y ] )
                     {
@@ -248,12 +270,76 @@ namespace ccamposh.BalancedSculptures.Dto
             return result2;
         }
 
+        internal static byte[] DecompressArray( byte[] source )
+        {
+            if ( ( source[ 0 ] & 128 ) == 0 )
+            {
+                //array is not compressed
+                return source;
+            }
+            source[ 0 ] = ( byte )( source[ 0 ] & 127 );
+            var result = new byte[ source[ 0 ] + 1 ];
+            result[ 0 ] = source[ 0 ];
+            for ( byte i = 1; i < source.Length; i++ )
+            {
+                var first = ( byte )( source[ i ] >> 4 );
+                result[ i * 2 - 1 ] = first;
+                if ( i * 2 <= source[ 0 ] )
+                {
+                    var second = ( byte )( source[ i ] & 0x0F );
+                    result[ i * 2 ] = second;
+                }
+            }
+            return result;
+        }
+
+        ///<summary>
+        /// Takes an array with size and all x positions and group two x position in a single byte
+        /// It is required all x values should be 15 or less
+        /// In case it is zipped the first bit of the array is turned on
+        ///</summary>
+        internal static byte[] CompressArray( byte[] source )
+        {
+            //if the content of the source has a value over 15 it cannot be zipped
+            for ( int i = 1; i <= source[ 0 ]; i++ )
+            {
+                if ( source[ i ] > 15 )
+                {
+                    return source;
+                }
+            }
+            var zipKey = new byte[ source[ 0 ] / 2 + source[ 0 ] % 2 + 1 ];
+            zipKey[ 0 ] = source[ 0 ];
+            for ( var i = 0; i < source[ 0 ]; i++ )
+            {
+                var index = ( i / 2 ) + 1;
+                var position = i % 2;
+                if ( position == 0 )
+                {
+                    zipKey[ index ] = ( byte )( source[ i + 1 ] << 4 );
+                }
+                else
+                {
+                    zipKey[ index ] = ( byte )( zipKey[ index ] + source[ i + 1 ] );
+                }
+            }
+            zipKey[ 0 ] = ( byte )( zipKey[ 0 ] | 128 );
+            return zipKey;
+        }
+
+        ///<summary>
+        /// Takes an sculpture definitions and generates an array of the x positions. 
+        /// The y position of each block is ignored, since it can be inferred
+        ///<summary>
         public byte[] ToArray()
         {
-            var result1 = new byte[ CurrentSize ];
-            var r1 = 0;
-            var result2 = new byte[ CurrentSize ];
-            var r2 = 0;
+            //the first byte in the array is the size of the sculpture
+            var result1 = new byte[ CurrentSize + 1 ];
+            result1[ 0 ] = CurrentSize;
+            var r1 = 1;
+            var result2 = new byte[ CurrentSize + 1 ];
+            result2[ 0 ] = CurrentSize;
+            var r2 = 1;
             for ( byte y = 0; y < MaxBlocks; y++ )
             {
                 for ( byte x = minimum; x <= maximum; x++ )
@@ -273,15 +359,20 @@ namespace ccamposh.BalancedSculptures.Dto
                         r2++;
                     }
                 }
-                if ( r1 == CurrentSize ) break;
+                if ( r1 > CurrentSize ) break;
             }
 
-            //Compare the two arrays
+            //Compare the two arrays (the original and its mirror)
+            byte[] result;
             if ( ByteArrayComparer.Compare( result1, result2 ) <= 0 )
             {
-                return result1;
+                result = result1;
             }
-            return result2;
+            else
+            {
+                result = result2;
+            }
+            return CompressArray( result );
         }
     }
 }
