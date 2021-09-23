@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using ccamposh.BalancedSculptures;
 using ccamposh.BalancedSculptures.Data;
+using ccamposh.BalancedSculptures.Dto;
 using Microsoft.Extensions.Logging;
 
 namespace ccamposh.BalancedSculptures
@@ -15,7 +16,7 @@ namespace ccamposh.BalancedSculptures
         {
             var factory = LoggerFactory.Create(i => i.AddConsole());
             var service = new MainService(factory.CreateLogger<MainService>(), new SculptureRepository(), new SculptureRepository());
-            var result = service.CalculateSculptures(15);
+            var result = service.CalculateSculptures(18, Sculpture.BaseSculpture);
         }
     }
 }
